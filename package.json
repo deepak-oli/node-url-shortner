@@ -1,8 +1,8 @@
 {
   "name": "node-url-shortner",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "URL shortener API using Node.js, Express, and Prisma",
+  "main": "dist/index.js",
   "scripts": {
     "dev": "tsx --watch src/index.ts",
     "build": "tsx --no-cache src/index.ts",
@@ -10,7 +10,7 @@
     "prisma:migrate": "prisma migrate dev"
   },
   "keywords": [],
-  "author": "",
+  "author": "Deepak",
   "license": "ISC",
   "packageManager": "pnpm@10.6.5",
   "devDependencies": {
