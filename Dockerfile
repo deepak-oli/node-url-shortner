@@ -17,6 +17,9 @@ COPY . .
 
 # Expose the application port
 EXPOSE 3000
+EXPOSE 9229
 
 # Command to run the application
-CMD ["pnpm", "dev"]
+# CMD ["pnpm", "dev"]
+CMD ["pnpm", "debug"]
+
