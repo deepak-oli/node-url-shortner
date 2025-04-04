@@ -7,11 +7,13 @@ interface DecodedToken {
   email: string;
 }
 
-interface AuthenticatedRequest extends Request {
-  user?: DecodedToken;
+export interface AuthenticatedRequest extends Request {
+  user?: DecodedToken & {
+    role: string;
+  };
 }
 
-export const authenticate = (
+export const authenticate = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
@@ -37,7 +39,7 @@ export const authenticate = (
     const userId = decoded.userId;
     const email = decoded.email;
 
-    const user = prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId, email },
     });
 
@@ -49,7 +51,11 @@ export const authenticate = (
       });
     }
     // Attach user to request object
-    req.user = decoded;
+    req.user = {
+      ...decoded,
+      // @ts-expect-error
+      role: user.role, // Ensure 'role' exists in your database schema
+    };
 
     next();
   } catch (error) {
