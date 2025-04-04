@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 
 import prisma from "@/db/client";
+import { setTokenCookie } from "@/utils/cookie.util";
 
 // Validation schemas
 const registerSchema = z.object({
@@ -79,13 +80,6 @@ export const registerUser = async (
       },
     });
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: newUser.id, email: newUser.email },
-      process.env.JWT_SECRET!,
-      { expiresIn: "24h" }
-    );
-
     // Return user info (excluding password) and token
     return res.status(201).json({
       success: true,
@@ -96,7 +90,6 @@ export const registerUser = async (
           email: newUser.email,
           name: newUser.name,
         },
-        token,
       },
     });
   } catch (error) {
@@ -145,6 +138,15 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
       { expiresIn: "24h" }
     );
 
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Only use HTTPS in production
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+    });
+
+    setTokenCookie(res, token);
+
     // Return user info (excluding password) and token
     return res.status(200).json({
       success: true,
@@ -155,7 +157,6 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
           email: user.email,
           name: user.name,
         },
-        token,
       },
     });
   } catch (error) {

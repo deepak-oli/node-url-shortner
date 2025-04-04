@@ -20,11 +20,17 @@ model User {
   email         String    @unique
   password      String    // Hashed password
   name          String?
+  role      Role     @default(USER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   urls          Url[]
   
   @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 model Url {

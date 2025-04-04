@@ -1,3 +1,4 @@
+import prisma from "@/db/client";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
@@ -16,23 +17,38 @@ export const authenticate = (
   next: NextFunction
 ) => {
   try {
-    // Get token from header
-    const authHeader = req.headers.authorization;
+    // Get token from cookie instead of header
+    const authToken = req.cookies.auth_token;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    // Check if token exists
+    if (!authToken) {
       return res.status(401).json({
         success: false,
         message: "Authentication required. No token provided.",
       });
     }
 
-    // Extract token
-    const token = authHeader.split(" ")[1];
-
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as DecodedToken;
+    const decoded = jwt.verify(
+      authToken,
+      process.env.JWT_SECRET!
+    ) as DecodedToken;
 
-    // Attach user info to request
+    const userId = decoded.userId;
+    const email = decoded.email;
+
+    const user = prisma.user.findUnique({
+      where: { id: userId, email },
+    });
+
+    // Check if user exists
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    // Attach user to request object
     req.user = decoded;
 
     next();
@@ -43,7 +59,6 @@ export const authenticate = (
         message: "Token expired",
       });
     }
-
     return res.status(401).json({
       success: false,
       message: "Invalid token",
