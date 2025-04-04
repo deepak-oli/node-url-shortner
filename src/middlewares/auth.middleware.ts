@@ -30,10 +30,7 @@ export const authenticate = (
     const token = authHeader.split(" ")[1];
 
     // Verify token
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "your_jwt_secret"
-    ) as DecodedToken;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as DecodedToken;
 
     // Attach user info to request
     req.user = decoded;

@@ -82,7 +82,7 @@ export const registerUser = async (
     // Generate JWT token
     const token = jwt.sign(
       { userId: newUser.id, email: newUser.email },
-      process.env.JWT_SECRET || "your_jwt_secret",
+      process.env.JWT_SECRET!,
       { expiresIn: "24h" }
     );
 
@@ -131,7 +131,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     });
 
     // Check if user exists and password is correct
-    if (!user || !(await argon2.verify(password, user.password))) {
+    if (!user || !(await argon2.verify(user.password, password))) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password",
@@ -141,7 +141,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      process.env.JWT_SECRET || "your_jwt_secret",
+      process.env.JWT_SECRET!,
       { expiresIn: "24h" }
     );
 
