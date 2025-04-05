@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      context: .
+      target: development # This points to the development stage in Dockerfile
+    container_name: app-dev
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - .env
+    ports:
+      - "${PORT}:8000" # Dev app port
+      - "9229:9229" # Debugging port
+    volumes:
+      - .:/app
+      - /app/node_modules # Prevents overwriting container dependencies
+    # command: [ "pnpm", "dev" ]
+    command: [ "pnpm", "debug" ]

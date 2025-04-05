@@ -1,27 +1,54 @@
-FROM node:22-alpine
+# Base stage (for both dev and prod)
+FROM node:22-alpine AS base
 
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and install dependencies
+# Copy package.json and pnpm-lock.yaml
 COPY package.json pnpm-lock.yaml ./
 
 # Install pnpm globally
 RUN corepack enable && corepack prepare pnpm@latest --activate
 RUN pnpm fetch
 
-# Install all dependencies
+# Install base dependencies (shared by build, production, and development)
 RUN pnpm install --offline
 
-# Copy source code
+# Build stage - includes development dependencies for building
+FROM base AS build
+
+# Copy the source code
 COPY . .
 
+# Build the application
+RUN pnpm build
+
+# Production stage
+FROM base AS production
+
+# Copy the built files from the build stage
+COPY --from=build /app/dist /app/dist
+COPY --from=build /app/package.json /app/package.json
+COPY --from=build /app/pnpm-lock.yaml /app/pnpm-lock.yaml
+
+# Install only production dependencies
+RUN pnpm install --prod --offline
+
 # Expose the application port
-EXPOSE 3000
+EXPOSE 8000
+
+# Set command for production
+CMD ["pnpm", "start"]
+
+# Development stage
+FROM base AS development
+
+# Copy the source code
+COPY . .
+
+# Expose both app and debugging ports
+EXPOSE 8000
 EXPOSE 9229
 
-
-# Command to run the application
-# CMD ["pnpm", "dev"]
+# Set command for development
 CMD ["pnpm", "debug"]
-

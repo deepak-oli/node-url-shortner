@@ -1,0 +1,17 @@
+services:
+  app:
+    build:
+      context: .
+      target: production # This points to the production stage in Dockerfile
+    container_name: app-prod
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - .env
+    ports:
+      - "${PORT}:8000" # Prod app port
+    volumes:
+      - /app/node_modules # Prevents overwriting container dependencies
+    command: [ "pnpm", "start" ]
