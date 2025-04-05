@@ -8,7 +8,7 @@ import {
 } from "@/controllers/admin.controller";
 import { authenticate } from "@/middlewares/auth.middleware";
 
-const router = Router();
+const router: Router = Router();
 
 router.get("/dashboard", authenticate, getDashboardStats);
 router.get("/users", authenticate, getAllUsers);

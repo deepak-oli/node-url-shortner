@@ -9,7 +9,7 @@ import {
 } from "@/controllers/user.controller";
 import { authenticate } from "@/middlewares/auth.middleware";
 
-const router = Router();
+const router: Router = Router();
 
 // Public routes
 router.post("/register", registerUser);

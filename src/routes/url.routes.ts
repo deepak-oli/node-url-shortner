@@ -9,7 +9,7 @@ import {
 } from "@/controllers/url.controller";
 import { authenticate } from "@/middlewares/auth.middleware";
 
-const router = Router();
+const router: Router = Router();
 
 // Public routes
 router.get("/:shortCode", redirectToUrl);
