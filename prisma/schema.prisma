@@ -7,7 +7,6 @@
 generator client {
   provider = "prisma-client-js"
   binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
-  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -20,7 +19,7 @@ model User {
   email         String    @unique
   password      String    // Hashed password
   name          String?
-  role      Role     @default(USER)
+  role          Role     @default(USER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   urls          Url[]

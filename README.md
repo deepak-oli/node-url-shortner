@@ -10,58 +10,71 @@ A modern URL shortening service built with Node.js, Express, TypeScript, and Pri
 - **ORM**: Prisma
 - **Package Manager**: pnpm
 - **Containerization**: Docker
+- **Caching**: Redis
 
 ## Prerequisites
 
 - Docker and Docker Compose
 - Git
+- Postman (for API testing)
 
 ## Installation
 
-1. Clone the repository:
+1. **Clone the repository**:
 
-   ```
+   ```bash
    git clone https://github.com/deepak-oli/node-url-shortner.git
    cd node-url-shortner
    ```
 
-2. Set up environment variables:
-   ```
+2. **Set up environment variables**:
+
+   Copy the example environment configuration file and adjust the settings for your local setup:
+
+   ```bash
    cp .env.example .env
    ```
-   Then edit `.env` file with your database connection details:
+
+   Then, edit the `.env` file with your database, Redis connection details and other details
 
 ## Running with Docker
 
-1. Start the application and database:
+1. **Start the application and database**:
 
-   ```
+   Bring up the application, PostgreSQL, and Redis using Docker Compose:
+
+   ```bash
    docker-compose up -d
    ```
 
-2. For the first-time setup, run database migrations:
+2. **For the first-time setup, run database migrations**:
 
-   ```
-   docker exec -it app sh -c "pnpm prisma:migrate --name \"init\""
+   To set up the database schema:
+
+   ```bash
+   docker exec -it app sh -c "pnpm prisma:migrate --name "init""
    ```
 
-   For subsequent migrations:
+   For subsequent migrations after schema changes:
 
-   ```
+   ```bash
    docker exec -it app sh -c "pnpm prisma:migrate"
    ```
 
-3. The application should now be running at http://localhost:3000 (or the port specified in your docker-compose.yml)
+3. **Seed the database**:
+
+   Run the Prisma seeding script to populate your database with initial data:
+
+   ```bash
+   docker exec -it app sh -c "pnpm prisma:seed"
+   ```
+
+4. **Access the application**:
+
+   The application should now be running at [http://localhost:8000](http://localhost:8000) (or the port specified in your `docker-compose.yml` file).
 
 ## Building for Production
 
-The Docker setup handles the build process. To rebuild the application after changes:
-
-```
-docker-compose down
-docker-compose up -d --build
-```
-
 ## License
 
-ISC
+This project is licensed under the ISC License.

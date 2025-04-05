@@ -3,6 +3,7 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { AuthenticatedRequest } from "@/middlewares/auth.middleware";
 import prisma from "@/db/client";
+import { redisGet, redisSet } from "@/services/redis.service";
 
 // Validation schemas
 const createUrlSchema = z.object({
@@ -93,12 +94,49 @@ export const createUrl = async (
   }
 };
 
+async function recordVisit(urlId: string, req: Request): Promise<void> {
+  await prisma.visit.create({
+    data: {
+      urlId,
+      ipAddress: req.ip,
+      userAgent: req.headers["user-agent"] || null,
+      referrer: req.headers.referer || null,
+    },
+  });
+}
+
+async function incrementClickCount(urlId: string): Promise<void> {
+  await prisma.url.update({
+    where: { id: urlId },
+    data: { clicks: { increment: 1 } },
+  });
+}
+
 export const redirectToUrl = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
     const { shortCode } = req.params;
+
+    // Check Redis cache first
+    const cachedUrl = await redisGet(shortCode);
+    if (cachedUrl) {
+      const url = JSON.parse(cachedUrl);
+      // Record the visit
+      await recordVisit(url.id, req);
+      // Increment click count
+      await incrementClickCount(url.id);
+      // Return cached URL data
+      res.json({
+        success: true,
+        data: {
+          redirectToUrl: url.originalUrl,
+          shortCode: url.shortCode,
+        },
+      });
+      return;
+    }
 
     // Find the URL
     const url = await prisma.url.findUnique({
@@ -131,19 +169,15 @@ export const redirectToUrl = async (
     }
 
     // Record the visit
-    await prisma.visit.create({
-      data: {
-        urlId: url.id,
-        ipAddress: req.ip,
-        userAgent: req.headers["user-agent"] || null,
-        referrer: req.headers.referer || null,
-      },
-    });
+    await recordVisit(url.id, req);
 
     // Increment click count
-    await prisma.url.update({
-      where: { id: url.id },
-      data: { clicks: { increment: 1 } },
+    await incrementClickCount(url.id);
+
+    // Cache the URL in Redis
+    // Set an expiration time for the cache (e.g., 1 hour)
+    await redisSet(shortCode, JSON.stringify(url), {
+      EX: 3600, // 1 hour in seconds
     });
 
     // Redirect to the original URL
@@ -152,7 +186,6 @@ export const redirectToUrl = async (
       data: {
         redirectToUrl: url.originalUrl,
         shortCode: url.shortCode,
-        clicks: url.clicks,
       },
     });
   } catch (error) {

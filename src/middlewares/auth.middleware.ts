@@ -17,17 +17,18 @@ export const authenticate = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
     // Get token from cookie instead of header
     const authToken = req.cookies.auth_token;
 
     // Check if token exists
     if (!authToken) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         message: "Authentication required. No token provided.",
       });
+      return;
     }
 
     // Verify token
@@ -45,29 +46,31 @@ export const authenticate = async (
 
     // Check if user exists
     if (!user) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         message: "User not found",
       });
+      return;
     }
     // Attach user to request object
     req.user = {
       ...decoded,
-      // @ts-expect-error
       role: user.role, // Ensure 'role' exists in your database schema
     };
 
     next();
   } catch (error) {
     if (error instanceof Error && error.name === "TokenExpiredError") {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         message: "Token expired",
       });
+      return;
     }
-    return res.status(401).json({
+    res.status(401).json({
       success: false,
       message: "Invalid token",
     });
+    return;
   }
 };

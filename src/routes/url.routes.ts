@@ -15,10 +15,10 @@ const router = Router();
 router.get("/:shortCode", redirectToUrl);
 
 // Protected routes - require authentication
-router.get("/stats/:shortCode", authenticate as any, getUrlStats);
-router.post("/", authenticate as any, createUrl);
-router.put("/:shortCode", authenticate as any, updateUrl);
-router.delete("/:shortCode", authenticate as any, deleteUrl);
-router.get("/user-urls", authenticate as any, getUserUrls);
+router.get("/stats/:shortCode", authenticate, getUrlStats);
+router.post("/", authenticate, createUrl);
+router.put("/:shortCode", authenticate, updateUrl);
+router.delete("/:shortCode", authenticate, deleteUrl);
+router.get("/user-urls", authenticate, getUserUrls);
 
 export default router;

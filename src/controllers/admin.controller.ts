@@ -168,7 +168,6 @@ export const getAllUsers = async (
         id: true,
         email: true,
         name: true,
-        // @ts-expect-error
         role: true,
         createdAt: true,
         _count: {
@@ -256,13 +255,11 @@ export const updateUserRole = async (
     // Update user role
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      // @ts-expect-error
       data: { role },
       select: {
         id: true,
         email: true,
         name: true,
-        // @ts-expect-error
         role: true,
       },
     });
