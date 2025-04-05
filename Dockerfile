@@ -20,16 +20,23 @@ FROM base AS build
 # Copy the source code
 COPY . .
 
+RUN pnpm prisma:generate
+
 # Build the application
 RUN pnpm build
 
 # Production stage
 FROM base AS production
 
+ENV NODE_ENV=production
+
 # Copy the built files from the build stage
-COPY --from=build /app/dist /app/dist
-COPY --from=build /app/package.json /app/package.json
-COPY --from=build /app/pnpm-lock.yaml /app/pnpm-lock.yaml
+
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/prisma ./prisma
 
 # Install only production dependencies
 RUN pnpm install --prod --offline

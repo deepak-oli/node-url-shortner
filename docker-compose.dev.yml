@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-      target: development # This points to the development stage in Dockerfile
+      # target: development # This points to the development stage in Dockerfile
     container_name: app-dev
     restart: unless-stopped
     depends_on:

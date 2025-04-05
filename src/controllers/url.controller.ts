@@ -126,16 +126,9 @@ export const redirectToUrl = async (
       // Record the visit
       await recordVisit(url.id, req);
       // Increment click count
-      await incrementClickCount(url.id);
-      // Return cached URL data
-      res.json({
-        success: true,
-        data: {
-          redirectToUrl: url.originalUrl,
-          shortCode: url.shortCode,
-        },
-      });
-      return;
+      // await incrementClickCount(url.id);
+      // redirect to the original URL
+      return res.redirect(url.originalUrl);
     }
 
     // Find the URL
@@ -181,13 +174,7 @@ export const redirectToUrl = async (
     });
 
     // Redirect to the original URL
-    res.json({
-      success: true,
-      data: {
-        redirectToUrl: url.originalUrl,
-        shortCode: url.shortCode,
-      },
-    });
+    // return res.redirect(url.originalUrl);
   } catch (error) {
     console.error("Error redirecting to URL:", error);
     res.status(500).json({

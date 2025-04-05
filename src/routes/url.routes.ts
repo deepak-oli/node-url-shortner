@@ -4,15 +4,11 @@ import {
   deleteUrl,
   getUrlStats,
   getUserUrls,
-  redirectToUrl,
   updateUrl,
 } from "@/controllers/url.controller";
 import { authenticate } from "@/middlewares/auth.middleware";
 
 const router: Router = Router();
-
-// Public routes
-router.get("/:shortCode", redirectToUrl);
 
 // Protected routes - require authentication
 router.get("/stats/:shortCode", authenticate, getUrlStats);

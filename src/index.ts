@@ -1,4 +1,4 @@
-import "module-alias/register";
+import "./register-alias";
 import app from "@/server";
 
 const PORT = Number(process.env.PORT) || 8000;

@@ -4,8 +4,8 @@
   "description": "URL shortener API using Node.js, Express, and Prisma",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "prisma generate && tsx -r tsconfig-paths/register --watch src/index.ts",
-    "debug": "prisma generate && tsx -r tsconfig-paths/register --inspect=0.0.0.0:9229 --watch src/index.ts",
+    "dev": "prisma generate && tsx --watch src/index.ts",
+    "debug": "prisma generate && tsx --inspect=0.0.0.0:9229 --watch src/index.ts",
     "build": "prisma generate && tsc",
     "start": "node dist/index.js",
     "prisma:migrate": "prisma migrate dev",
@@ -33,14 +33,11 @@
     "@types/cookie-parser": "^1.4.8",
     "@types/express": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.9",
+    "@types/module-alias": "^2.0.4",
     "@types/node": "^22.13.14",
     "@types/pg": "^8.11.11",
     "prisma": "^6.5.0",
-    "tsconfig-paths": "^4.2.0",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
-  },
-  "_moduleAliases": {
-    "@": "dist"
   }
 }
