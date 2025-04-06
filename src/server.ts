@@ -1,6 +1,7 @@
 import express from "express";
 import type { Express } from "express";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 import { initRedis } from "@/services/redis.service";
 
@@ -11,6 +12,13 @@ import { redirectToUrl } from "@/controllers/url.controller";
 
 const app: Express = express();
 
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  })
+);
 app.use(cookieParser());
 app.use(express.json());
 

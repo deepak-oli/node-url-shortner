@@ -20,8 +20,6 @@ FROM base AS build
 # Copy the source code
 COPY . .
 
-RUN pnpm prisma:generate
-
 # Build the application
 RUN pnpm build
 
