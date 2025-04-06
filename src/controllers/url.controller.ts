@@ -174,7 +174,7 @@ export const redirectToUrl = async (
     });
 
     // Redirect to the original URL
-    // return res.redirect(url.originalUrl);
+    return res.redirect(url.originalUrl);
   } catch (error) {
     console.error("Error redirecting to URL:", error);
     res.status(500).json({

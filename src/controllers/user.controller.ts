@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 
 import prisma from "@/db/client";
-import { setTokenCookie } from "@/utils/cookie.util";
+import { clearTokenCookie, setTokenCookie } from "@/utils/cookie.util";
 
 // Validation schemas
 const registerSchema = z.object({
@@ -161,6 +161,29 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     });
   } catch (error) {
     console.error("Error logging in user:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+/**
+ * Logout user
+ */
+export const logoutUser = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<any> => {
+  try {
+    clearTokenCookie(res);
+
+    return res.status(200).json({
+      success: true,
+      message: "Logout successful",
+    });
+  } catch (error) {
+    console.error("Error logging out user:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
