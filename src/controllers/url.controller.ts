@@ -77,9 +77,7 @@ export const createUrl = async (
         id: newUrl.id,
         originalUrl: newUrl.originalUrl,
         shortCode: newUrl.shortCode,
-        shortUrl: `${
-          process.env.BASE_URL || req.protocol + "://" + req.get("host")
-        }/${newUrl.shortCode}`,
+        shortUrl: `${process.env.BASE_URL}/${newUrl.shortCode}`,
         expiresAt: newUrl.expiresAt,
         isActive: newUrl.isActive,
         createdAt: newUrl.createdAt,
@@ -198,7 +196,7 @@ export const getUserUrls = async (
       },
     });
 
-    const baseUrl = process.env.FRONTEND_URL;
+    const baseUrl = process.env.BASE_URL;
 
     const urlsWithShortUrl = urls.map((url) => ({
       ...url,
