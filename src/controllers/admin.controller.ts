@@ -3,6 +3,7 @@ import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { AuthenticatedRequest } from "@/middlewares/auth.middleware";
+import { ENV } from "@/config/env.config";
 
 const prisma = new PrismaClient();
 
@@ -317,12 +318,9 @@ export const getAllUrls = async (
     // Get total count for pagination
     const totalUrls = await prisma.url.count();
 
-    const baseUrl =
-      process.env.BASE_URL || req.protocol + "://" + req.get("host");
-
     const urlsWithShortUrl = urls.map((url) => ({
       ...url,
-      shortUrl: `${baseUrl}/${url.shortCode}`,
+      shortUrl: `${ENV.BASE_URL}/${url.shortCode}`,
     }));
 
     res.status(200).json({

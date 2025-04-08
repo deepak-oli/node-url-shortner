@@ -5,28 +5,22 @@ import cors from "cors";
 
 import { initRedis } from "@/services/redis.service";
 
-import userRoutes from "@/routes/user.routes";
-import urlRoutes from "@/routes/url.routes";
-import adminRoutes from "@/routes/admin.routes";
 import { redirectToUrl } from "@/controllers/url.controller";
+import router from "@/routes";
+
+import { ENV, isProduction } from "@/config/env.config";
 
 const app: Express = express();
 
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  })
-);
+const CORS_OPTIONS = {
+  origin: isProduction ? ENV.FRONTEND_URL : "*",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+};
+
+app.use(cors(CORS_OPTIONS));
 app.use(cookieParser());
 app.use(express.json());
-
-const router = express.Router();
-
-router.use("/users", userRoutes);
-router.use("/urls", urlRoutes);
-router.use("/admin", adminRoutes);
 
 // Health check route
 app.get("/health", (req, res) => {
@@ -35,12 +29,15 @@ app.get("/health", (req, res) => {
     message: "Server is healthy",
   });
 });
+
+// Shortcode redirect route
 app.get("/:shortCode", redirectToUrl);
 
 app.use("/api/v1", router);
 
 initRedis().catch((err) => {
   console.error("Error initializing Redis:", err);
+  process.exit(1); // Fail the server startup if Redis isn't initialized
 });
 
 export default app;

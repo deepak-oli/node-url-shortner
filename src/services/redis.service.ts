@@ -1,14 +1,15 @@
 import { createClient, RedisClientType, SetOptions } from "redis";
+import { ENV } from "@/config/env.config";
 
 let client: RedisClientType;
 
 export async function initRedis(): Promise<void> {
   client = createClient({
     socket: {
-      host: process.env.REDIS_HOST,
-      port: Number(process.env.REDIS_PORT),
+      host: ENV.REDIS_HOST,
+      port: ENV.REDIS_PORT,
     },
-    password: process.env.REDIS_PASSWORD,
+    password: ENV.REDIS_PASSWORD,
   });
 
   client.on("error", (err) => console.error("Redis error:", err));

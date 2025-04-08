@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import { AuthenticatedRequest } from "@/middlewares/auth.middleware";
 import prisma from "@/db/client";
 import { redisGet, redisSet } from "@/services/redis.service";
+import { ENV } from "@/config/env.config";
 
 // Validation schemas
 const createUrlSchema = z.object({
@@ -77,7 +78,7 @@ export const createUrl = async (
         id: newUrl.id,
         originalUrl: newUrl.originalUrl,
         shortCode: newUrl.shortCode,
-        shortUrl: `${process.env.BASE_URL}/${newUrl.shortCode}`,
+        shortUrl: `${ENV.BASE_URL}/${newUrl.shortCode}`,
         expiresAt: newUrl.expiresAt,
         isActive: newUrl.isActive,
         createdAt: newUrl.createdAt,
@@ -196,11 +197,9 @@ export const getUserUrls = async (
       },
     });
 
-    const baseUrl = process.env.BASE_URL;
-
     const urlsWithShortUrl = urls.map((url) => ({
       ...url,
-      shortUrl: `${baseUrl}/${url.shortCode}`,
+      shortUrl: `${ENV.BASE_URL}/${url.shortCode}`,
     }));
 
     res.status(200).json({
@@ -274,7 +273,7 @@ export const getUrlStats = async (
           id: url.id,
           originalUrl: url.originalUrl,
           shortCode: url.shortCode,
-          shortUrl: `${process.env.BASE_URL}/${url.shortCode}`,
+          shortUrl: `${ENV.BASE_URL}/${url.shortCode}`,
           createdAt: url.createdAt,
           expiresAt: url.expiresAt,
           isActive: url.isActive,
@@ -360,7 +359,7 @@ export const updateUrl = async (
         id: updatedUrl.id,
         originalUrl: updatedUrl.originalUrl,
         shortCode: updatedUrl.shortCode,
-        shortUrl: `${process.env.BASE_URL}/${updatedUrl.shortCode}`,
+        shortUrl: `${ENV.BASE_URL}/${updatedUrl.shortCode}`,
         expiresAt: updatedUrl.expiresAt,
         isActive: updatedUrl.isActive,
         createdAt: updatedUrl.createdAt,

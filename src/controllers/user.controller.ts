@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import prisma from "@/db/client";
 import { clearTokenCookie, setTokenCookie } from "@/utils/cookie.util";
+import { ENV } from "@/config/env.config";
 
 // Validation schemas
 const registerSchema = z.object({
@@ -134,16 +135,9 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      process.env.JWT_SECRET!,
+      ENV.JWT_SECRET!,
       { expiresIn: "24h" }
     );
-
-    res.cookie("auth_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Only use HTTPS in production
-      sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
-    });
 
     setTokenCookie(res, token);
 

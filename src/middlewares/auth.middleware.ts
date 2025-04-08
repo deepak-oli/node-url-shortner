@@ -1,6 +1,8 @@
-import prisma from "@/db/client";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+
+import prisma from "@/db/client";
+import { ENV } from "@/config/env.config";
 
 interface DecodedToken {
   userId: string;
@@ -32,10 +34,7 @@ export const authenticate = async (
     }
 
     // Verify token
-    const decoded = jwt.verify(
-      authToken,
-      process.env.JWT_SECRET!
-    ) as DecodedToken;
+    const decoded = jwt.verify(authToken, ENV.JWT_SECRET!) as DecodedToken;
 
     const userId = decoded.userId;
     const email = decoded.email;
