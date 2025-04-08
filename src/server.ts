@@ -3,7 +3,7 @@ import type { Express } from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
-import { initRedis } from "@/services/redis.service";
+import { initRedis } from "@/config/redis.config";
 
 import { redirectToUrl } from "@/controllers/url.controller";
 import router from "@/routes";
@@ -34,6 +34,18 @@ app.get("/health", (req, res) => {
 app.get("/:shortCode", redirectToUrl);
 
 app.use("/api/v1", router);
+
+// Fallback for unmatched routes
+import { CustomResponse } from "@/utils/response.util";
+
+app.use("*", (req, res) => {
+  return CustomResponse.error({
+    res,
+    statusCode: 404,
+    message: `Route '${req.originalUrl}' not found.`,
+    log: false,
+  });
+});
 
 initRedis().catch((err) => {
   console.error("Error initializing Redis:", err);

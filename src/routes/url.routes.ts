@@ -10,7 +10,6 @@ import { authenticate } from "@/middlewares/auth.middleware";
 
 const router: Router = Router();
 
-// Protected routes - require authentication
 router.get("/stats/:shortCode", authenticate, getUrlStats);
 router.post("/", authenticate, createUrl);
 router.put("/:shortCode", authenticate, updateUrl);

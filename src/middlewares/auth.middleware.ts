@@ -3,17 +3,19 @@ import jwt from "jsonwebtoken";
 
 import prisma from "@/db/client";
 import { ENV } from "@/config/env.config";
+import { CustomResponse } from "@/utils/response.util";
+import { User } from "@prisma/client";
 
 interface DecodedToken {
-  userId: string;
-  email: string;
+  sub: string;
 }
 
 export interface AuthenticatedRequest extends Request {
-  user?: DecodedToken & {
-    role: string;
-  };
+  user?: AuthenticatedUser;
 }
+
+export interface AuthenticatedUser
+  extends Pick<User, "id" | "role" | "email"> {}
 
 export const authenticate = async (
   req: AuthenticatedRequest,
@@ -22,13 +24,15 @@ export const authenticate = async (
 ): Promise<void> => {
   try {
     // Get token from cookie instead of header
-    const authToken = req.cookies.auth_token;
+    const authToken = req.cookies.token;
 
     // Check if token exists
     if (!authToken) {
-      res.status(401).json({
-        success: false,
+      CustomResponse.error({
+        res,
+        statusCode: 401,
         message: "Authentication required. No token provided.",
+        log: false,
       });
       return;
     }
@@ -36,39 +40,46 @@ export const authenticate = async (
     // Verify token
     const decoded = jwt.verify(authToken, ENV.JWT_SECRET!) as DecodedToken;
 
-    const userId = decoded.userId;
-    const email = decoded.email;
+    const userId = decoded.sub;
 
     const user = await prisma.user.findUnique({
-      where: { id: userId, email },
+      where: { id: userId },
     });
 
     // Check if user exists
     if (!user) {
-      res.status(401).json({
-        success: false,
-        message: "User not found",
+      CustomResponse.error({
+        res,
+        statusCode: 401,
+        message: "User not found.",
+        log: false,
       });
       return;
     }
     // Attach user to request object
     req.user = {
-      ...decoded,
-      role: user.role, // Ensure 'role' exists in your database schema
+      id: userId,
+      email: user.email,
+      role: user.role,
     };
 
     next();
   } catch (error) {
     if (error instanceof Error && error.name === "TokenExpiredError") {
-      res.status(401).json({
-        success: false,
-        message: "Token expired",
+      CustomResponse.error({
+        res,
+        statusCode: 401,
+        message: "Token expired.",
+        log: false,
       });
       return;
     }
-    res.status(401).json({
-      success: false,
-      message: "Invalid token",
+
+    CustomResponse.error({
+      res,
+      statusCode: 401,
+      message: "Invalid token.",
+      log: false,
     });
     return;
   }

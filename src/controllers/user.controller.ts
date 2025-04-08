@@ -1,401 +1,192 @@
 import { Request, Response } from "express";
-import argon2 from "argon2";
-import jwt from "jsonwebtoken";
 import { z } from "zod";
 
-import prisma from "@/db/client";
-import { clearTokenCookie, setTokenCookie } from "@/utils/cookie.util";
-import { ENV } from "@/config/env.config";
+import { CustomResponse, getErrorMessage } from "@/utils/response.util";
+import { setTokenCookie, clearTokenCookie } from "@/utils/cookie.util";
+import * as userService from "@/services/user.service";
+import { AuthenticatedRequest } from "@/middlewares/auth.middleware";
 
-// Validation schemas
 const registerSchema = z.object({
-  email: z.string().email("Invalid email format"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  email: z.string().email("Invalid email format."),
+  password: z.string().min(8, "Password must be at least 8 characters."),
   name: z.string().optional(),
 });
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email format"),
-  password: z.string(),
+  email: z.string().email("Invalid email format."),
+  password: z.string().min(8, "Password must be at least 8 characters."),
 });
 
 const updateUserSchema = z.object({
   name: z.string().optional(),
-  email: z.string().email("Invalid email format").optional(),
+  email: z.string().email("Invalid email format.").optional(),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters")
+    .min(8, "Password must be at least 8 characters.")
     .optional(),
 });
 
-// Type for authenticated request
-interface AuthenticatedRequest extends Request {
-  user?: {
-    userId: string;
-    email: string;
-  };
-}
-
-/**
- * Register a new user
- */
-export const registerUser = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
-  try {
-    // Validate request body
-    const validationResult = registerSchema.safeParse(req.body);
-    if (!validationResult.success) {
-      res.status(400).json({
-        success: false,
-        message: "Validation error",
-        errors: validationResult.error.format(),
-      });
-      return;
-    }
-
-    const { email, password, name } = validationResult.data;
-
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        message: "User with this email already exists",
-      });
-    }
-
-    // Hash password
-    const hashedPassword = await argon2.hash(password);
-
-    // Create user
-    const newUser = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-      },
-    });
-
-    // Return user info (excluding password) and token
-    return res.status(201).json({
-      success: true,
-      message: "User registered successfully",
-      data: {
-        user: {
-          id: newUser.id,
-          email: newUser.email,
-          name: newUser.name,
-        },
-      },
-    });
-  } catch (error) {
-    console.error("Error registering user:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
+export const registerUser = async (req: Request, res: Response) => {
+  const parsed = registerSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return CustomResponse.error({
+      res,
+      statusCode: 400,
+      message: "Validation error.",
+      data: parsed.error,
+      log: false,
     });
   }
-};
 
-/**
- * Login user
- */
-export const loginUser = async (req: Request, res: Response): Promise<any> => {
   try {
-    // Validate request body
-    const validationResult = loginSchema.safeParse(req.body);
-    if (!validationResult.success) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation error",
-        errors: validationResult.error.format(),
-      });
-    }
-
-    const { email, password } = validationResult.data;
-
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    // Check if user exists and password is correct
-    if (!user || !(await argon2.verify(user.password, password))) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password",
-      });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      ENV.JWT_SECRET!,
-      { expiresIn: "24h" }
+    const user = await userService.registerUser(
+      parsed.data.email,
+      parsed.data.password,
+      parsed.data.name
     );
-
-    setTokenCookie(res, token);
-
-    // Return user info (excluding password) and token
-    return res.status(200).json({
-      success: true,
-      message: "Login successful",
-      data: {
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-        },
-      },
+    return CustomResponse.success({
+      res,
+      statusCode: 201,
+      message: "User registered successfully.",
+      data: { user: { id: user.id, email: user.email, name: user.name } },
     });
   } catch (error) {
-    console.error("Error logging in user:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
+    return CustomResponse.error({
+      res,
+      message: getErrorMessage(error),
     });
   }
 };
 
-/**
- * Logout user
- */
-export const logoutUser = async (
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<any> => {
+export const loginUser = async (req: Request, res: Response) => {
+  const parsed = loginSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return CustomResponse.error({
+      res,
+      statusCode: 400,
+      message: "Validation error.",
+      data: parsed.error,
+      log: false,
+    });
+  }
+
+  try {
+    const { user, token } = await userService.loginUser(
+      parsed.data.email,
+      parsed.data.password
+    );
+    setTokenCookie(res, token);
+    return CustomResponse.success({
+      res,
+      message: "Login successful.",
+      data: { user: { id: user.id, email: user.email, name: user.name } },
+    });
+  } catch (error) {
+    return CustomResponse.error({
+      res,
+      statusCode: 401,
+      message: getErrorMessage(error),
+    });
+  }
+};
+
+export const logoutUser = async (_req: AuthenticatedRequest, res: Response) => {
   try {
     clearTokenCookie(res);
-
-    return res.status(200).json({
-      success: true,
-      message: "Logout successful",
-    });
+    return CustomResponse.success({ res, message: "Logout successful." });
   } catch (error) {
-    console.error("Error logging out user:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
+    return CustomResponse.error({
+      res,
+      message: getErrorMessage(error),
     });
   }
 };
 
-/**
- * Get user profile
- */
 export const getUserProfile = async (
   req: AuthenticatedRequest,
   res: Response
-): Promise<any> => {
+) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    return CustomResponse.error({
+      res,
+      statusCode: 401,
+      message: "Unauthorized.",
+    });
+  }
+
   try {
-    const userId = req.user?.userId;
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
-
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: { user },
-    });
+    const user = await userService.getUserProfile(userId);
+    return CustomResponse.success({ res, data: { user } });
   } catch (error) {
-    console.error("Error fetching user profile:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
+    return CustomResponse.error({
+      res,
+      message: getErrorMessage(error),
     });
   }
 };
 
-/**
- * Update user profile
- */
 export const updateUserProfile = async (
   req: AuthenticatedRequest,
   res: Response
-): Promise<any> => {
-  try {
-    const userId = req.user?.userId;
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
-
-    // Validate request body
-    const validationResult = updateUserSchema.safeParse(req.body);
-    if (!validationResult.success) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation error",
-        errors: validationResult.error.format(),
-      });
-    }
-
-    const { name, email, password } = validationResult.data;
-
-    // Prepare update data
-    const updateData: any = {};
-    if (name !== undefined) updateData.name = name;
-    if (email !== undefined) updateData.email = email;
-    if (password !== undefined) {
-      updateData.password = await argon2.hash(password);
-    }
-
-    // Check if email already exists (if changing email)
-    if (email) {
-      const existingUser = await prisma.user.findFirst({
-        where: {
-          email,
-          id: { not: userId },
-        },
-      });
-
-      if (existingUser) {
-        return res.status(409).json({
-          success: false,
-          message: "Email already in use",
-        });
-      }
-    }
-
-    // Update user
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: updateData,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        updatedAt: true,
-      },
+) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    return CustomResponse.error({
+      res,
+      statusCode: 401,
+      message: "Unauthorized.",
     });
+  }
 
-    return res.status(200).json({
-      success: true,
-      message: "Profile updated successfully",
+  const parsed = updateUserSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return CustomResponse.error({
+      res,
+      statusCode: 400,
+      message: "Validation error.",
+      data: parsed.error,
+    });
+  }
+
+  try {
+    const updatedUser = await userService.updateUserProfile(
+      userId,
+      parsed.data
+    );
+    return CustomResponse.success({
+      res,
+      message: "Profile updated successfully.",
       data: { user: updatedUser },
     });
-  } catch (error) {
-    console.error("Error updating user profile:", error);
-
-    // Handle specific Prisma errors
-    if ((error as any).code === "P2025") {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  } catch (error: any) {
+    const statusCode = error.code === "P2025" ? 404 : 500;
+    const message =
+      error.code === "P2025" ? "User not found." : "Internal server error.";
+    return CustomResponse.error({ res, statusCode, message, data: error });
   }
 };
 
-/**
- * Delete user account
- */
-export const deleteUser = async (
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<any> => {
-  try {
-    const userId = req.user?.userId;
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
-
-    // Delete user
-    await prisma.user.delete({
-      where: { id: userId },
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "User account deleted successfully",
-    });
-  } catch (error) {
-    console.error("Error deleting user:", error);
-
-    // Handle specific Prisma errors
-    if ((error as { code?: string }).code === "P2025") {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
+export const deleteUser = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    return CustomResponse.error({
+      res,
+      statusCode: 401,
+      message: "Unauthorized.",
     });
   }
-};
 
-/**
- * Get all users (admin function)
- */
-export const getAllUsers = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
   try {
-    // In a real app, you'd check if the requesting user has admin privileges
-
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    await userService.deleteUser(userId);
+    return CustomResponse.success({
+      res,
+      message: "User account deleted successfully.",
     });
-
-    return res.status(200).json({
-      success: true,
-      data: { users },
-    });
-  } catch (error) {
-    console.error("Error fetching all users:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  } catch (error: any) {
+    const statusCode = error.code === "P2025" ? 404 : 500;
+    const message =
+      error.code === "P2025" ? "User not found." : "Internal server error.";
+    return CustomResponse.error({ res, statusCode, message });
   }
 };

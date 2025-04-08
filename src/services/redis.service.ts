@@ -1,35 +1,22 @@
-import { createClient, RedisClientType, SetOptions } from "redis";
-import { ENV } from "@/config/env.config";
+import { SetOptions } from "redis";
 
-let client: RedisClientType;
-
-export async function initRedis(): Promise<void> {
-  client = createClient({
-    socket: {
-      host: ENV.REDIS_HOST,
-      port: ENV.REDIS_PORT,
-    },
-    password: ENV.REDIS_PASSWORD,
-  });
-
-  client.on("error", (err) => console.error("Redis error:", err));
-
-  await client.connect();
-  console.log("Redis connected");
-}
+import { getRedisClient } from "@/config/redis.config";
 
 export async function redisSet(
   key: string,
   value: string,
   options?: SetOptions
 ): Promise<void> {
+  const client = getRedisClient();
   await client.set(key, value, options);
 }
 
 export async function redisGet(key: string): Promise<string | null> {
+  const client = getRedisClient();
   return await client.get(key);
 }
 
 export async function redisDel(key: string): Promise<void> {
+  const client = getRedisClient();
   await client.del(key);
 }
