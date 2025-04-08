@@ -83,7 +83,7 @@ A URL shortening service built with Node.js, Express, TypeScript, and Prisma ORM
 1. **Deploy using production configuration**:
 
    ```bash
-   docker compose up -d
+   docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build
    ```
 
 2. **Access the application**:
@@ -171,7 +171,6 @@ The application uses Redis to cache:
 - **Session Management**: Store session data in Redis for faster authentication checks
 - **Analytics Dashboard**: Create a user interface for URL statistics
 - **Custom Short URLs**: Allow users to create custom short URL codes
-- **API Key Support**: Provide API keys for programmatic access
 - **URL Expiration**: Add the ability to set expiration dates for short URLs
 
 ## Error Handling and Validation
