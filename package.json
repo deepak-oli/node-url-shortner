@@ -28,6 +28,7 @@
     "nanoid": "^5.1.5",
     "pg": "^8.14.1",
     "redis": "^4.7.0",
+    "winston": "^3.17.0",
     "zod": "^3.24.2",
     "zod-validation-error": "^3.4.0"
   },

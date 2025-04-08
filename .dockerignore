@@ -23,3 +23,7 @@
 LICENSE
 README.md
 dist
+logs
+*.log
+coverage
+**/coverage

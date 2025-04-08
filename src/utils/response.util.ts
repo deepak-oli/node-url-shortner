@@ -1,6 +1,6 @@
 import { Response } from "express";
-import { ZodError } from "zod";
 import { fromError, isZodErrorLike } from "zod-validation-error";
+import { Logger } from "./logger.util";
 
 export type CustomResponseType<T> = {
   success: boolean;
@@ -24,7 +24,7 @@ export class CustomResponse {
     statusCode = 200,
     log = true,
   }: CustomResponseOptions<T>): void {
-    if (log) console.log("Success:", { message, data });
+    if (log) Logger.info(message, data);
     res.status(statusCode).json({
       success: true,
       message,
@@ -39,7 +39,7 @@ export class CustomResponse {
     statusCode = 500,
     log = true,
   }: CustomResponseOptions<T>): void {
-    if (log) console.error(message, data);
+    if (log) Logger.error(message, data);
 
     const isZodErrorData = data && isZodErrorLike(data);
 
