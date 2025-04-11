@@ -8,12 +8,12 @@ import { initRedis } from "@/config/redis.config";
 import { redirectToUrl } from "@/controllers/url.controller";
 import router from "@/routes";
 
-import { ENV, isProduction } from "@/config/env.config";
+import { ENV } from "@/config/env.config";
 
 const app: Express = express();
 
 const CORS_OPTIONS = {
-  origin: isProduction ? ENV.FRONTEND_URL : "*",
+  origin: ENV.FRONTEND_URL,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
 };
